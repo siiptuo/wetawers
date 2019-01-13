@@ -1,0 +1,22 @@
+{
+  "name": "cscm",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "cscm": "./cli.js"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Tuomas Siipola",
+  "license": "MIT",
+  "dependencies": {
+    "gonzales-pe": "^4.2.3"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "mocha": "^5.2.0",
+    "prettier": "^1.15.3"
+  }
+}
