@@ -1,12 +1,12 @@
 function findColors(node) {
   if (node.type == "color") {
-    return [node.content];
+    return { content: node.content, start: node.start, end: node.end };
   }
   if (
     node.type == "function" &&
     ["rgb", "rgba", "hsl", "hsla"].includes(node.content[0].content)
   ) {
-    return [node.toString()];
+    return [{ content: node.toString(), start: node.start, end: node.end }];
   }
   if (Array.isArray(node.content)) {
     return node.content.map(findColors).flat();
