@@ -12,7 +12,8 @@
   "author": "Tuomas Siipola",
   "license": "MIT",
   "dependencies": {
-    "gonzales-pe": "^4.2.3"
+    "gonzales-pe": "^4.2.3",
+    "parse-color": "^1.0.0"
   },
   "devDependencies": {
     "assert": "^1.4.1",
