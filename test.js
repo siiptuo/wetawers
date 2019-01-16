@@ -1,6 +1,7 @@
 const assert = require("assert");
 const gonzales = require("gonzales-pe");
 const parseColor = require("parse-color");
+const { spawnSync } = require("child_process");
 
 const { findColors, compareColors, findDuplicates } = require("./");
 
@@ -161,5 +162,40 @@ describe("findDuplicates", () => {
     assert.deepEqual(findDuplicates([color1, color2, color3]), [
       [color1, color2]
     ]);
+  });
+});
+
+describe("CLI", () => {
+  function run(...args) {
+    const { status, stdout, stderr } = spawnSync("node", ["./cli.js", ...args]);
+    return {
+      status,
+      stdout: stdout.length === 0 ? [] : stdout.toString().split("\n"),
+      stderr: stderr.length === 0 ? [] : stderr.toString().split("\n")
+    };
+  }
+
+  it("should find duplicates", () => {
+    const result = run("fixtures/duplicates.css");
+    assert.deepEqual(result.stdout, [
+      "color #ff0000 duplicated:",
+      "- fixtures/duplicates.css:2:21",
+      "- fixtures/duplicates.css:11:21",
+      "",
+      "color #00ff00 duplicated:",
+      "- fixtures/duplicates.css:6:10",
+      "- fixtures/duplicates.css:10:10",
+      "",
+      ""
+    ]);
+    assert.deepEqual(result.stderr, []);
+    assert.equal(result.status, 1);
+  });
+
+  it("should not find duplicates", () => {
+    const result = run("fixtures/no-duplicates.css");
+    assert.deepEqual(result.stdout, []);
+    assert.deepEqual(result.stderr, []);
+    assert.equal(result.status, 0);
   });
 });
