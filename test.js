@@ -1,7 +1,8 @@
 const assert = require("assert");
 const gonzales = require("gonzales-pe");
+const parseColor = require("parse-color");
 
-const { findColors } = require("./");
+const { findColors, compareColors, findDuplicates } = require("./");
 
 describe("findColors", () => {
   it("should find #rrggbb colors", () => {
@@ -111,6 +112,54 @@ describe("findColors", () => {
           line: 1
         }
       }
+    ]);
+  });
+});
+
+describe("compareColors", () => {
+  it("should return zero for same colors", () => {
+    const a = [270, 60, 70, 1];
+    assert.equal(compareColors(a, a), 0);
+  });
+
+  it("should return non-zero for different colors", () => {
+    const a = [270, 60, 70, 1];
+    const b = [240, 100, 50, 1];
+    assert.notEqual(compareColors(a, b), 0);
+  });
+});
+
+describe("findDuplicates", () => {
+  function makeColor(content) {
+    return {
+      rgba: parseColor(content).rgba,
+      content,
+      start: {
+        line: 1,
+        column: 1
+      },
+      end: {
+        line: 1,
+        column: 1
+      }
+    };
+  }
+
+  it("should find exact duplicates", () => {
+    const color1 = makeColor("#ff0000");
+    const color2 = makeColor("#ff0000");
+    const color3 = makeColor("#00ff00");
+    assert.deepEqual(findDuplicates([color1, color2, color3]), [
+      [color1, color2]
+    ]);
+  });
+
+  it("should find similar colors", () => {
+    const color1 = makeColor("#ff0000");
+    const color2 = makeColor("#ff0001");
+    const color3 = makeColor("#00ff00");
+    assert.deepEqual(findDuplicates([color1, color2, color3]), [
+      [color1, color2]
     ]);
   });
 });

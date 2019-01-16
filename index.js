@@ -30,4 +30,26 @@ function findColors(node) {
   return [];
 }
 
-module.exports = { findColors };
+function compareColors(a, b) {
+  return Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+}
+
+function findDuplicates(colors) {
+  const duplicates = [];
+  for (let i = 0; i < colors.length; i++) {
+    const matches = colors.splice(0, 1);
+    for (let j = 0; j < colors.length; ) {
+      if (compareColors(matches[0].rgba, colors[j].rgba) < 5) {
+        matches.push(colors.splice(j, 1)[0]);
+      } else {
+        j++;
+      }
+    }
+    if (matches.length > 1) {
+      duplicates.push(matches);
+    }
+  }
+  return duplicates;
+}
+
+module.exports = { findColors, compareColors, findDuplicates };
