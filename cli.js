@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
-const gonzales = require("gonzales-pe");
-const { findColors, findDuplicates } = require("./");
+const { parseFile, findColors, findDuplicates } = require("./");
 
-const file = process.argv[2];
-const css = fs.readFileSync(file, "utf8");
-const parseTree = gonzales.parse(css);
-const colors = findColors(parseTree);
-const duplicates = findDuplicates(colors);
+function resolver(file) {
+  return fs.readFileSync(file, "utf8");
+}
 
 function formatColor(rgba) {
   return (
@@ -19,12 +16,22 @@ function formatColor(rgba) {
   );
 }
 
+const file = process.argv[2];
+const parseTree = parseFile(file, resolver);
+const colors = findColors(parseTree);
+const duplicates = findDuplicates(colors);
+
 if (duplicates.length > 0) {
   for (const colors of duplicates) {
     console.log("color " + formatColor(colors[0].rgba) + " duplicated:");
     for (const color of colors) {
       console.log(
-        "- " + file + ":" + color.start.line + ":" + color.start.column
+        "- " +
+          color.filename +
+          ":" +
+          color.start.line +
+          ":" +
+          color.start.column
       );
     }
     console.log();

@@ -1,11 +1,31 @@
+const path = require("path");
 const parseColor = require("parse-color");
+const gonzales = require("gonzales-pe");
 
-function findColors(node) {
+function parseFile(filename, resolver) {
+  const parseTree = gonzales.parse(resolver(filename), { syntax: "scss" });
+  let result = [
+    {
+      filename,
+      parseTree
+    }
+  ];
+  const directory = path.dirname(filename);
+  parseTree.forEach("atrule", node => {
+    if (node.content[0].content[0].content !== "import") return;
+    const file = node.content[2].content.slice(1, -1);
+    result = [...parseFile(path.join(directory, file), resolver), ...result];
+  });
+  return result;
+}
+
+function _findColors(node, filename) {
   if (node.type == "color") {
     const content = "#" + node.content;
     return {
       rgba: parseColor(content).rgba,
       content,
+      filename,
       start: node.start,
       end: node.end
     };
@@ -19,15 +39,22 @@ function findColors(node) {
       {
         rgba: parseColor(content).rgba,
         content,
+        filename,
         start: node.start,
         end: node.end
       }
     ];
   }
   if (Array.isArray(node.content)) {
-    return node.content.map(findColors).flat();
+    return node.content.map(child => _findColors(child, filename)).flat();
   }
   return [];
+}
+
+function findColors(parseTree) {
+  return parseTree
+    .map(item => _findColors(item.parseTree, item.filename))
+    .flat();
 }
 
 function compareColors(a, b) {
@@ -52,4 +79,4 @@ function findDuplicates(colors) {
   return duplicates;
 }
 
-module.exports = { findColors, compareColors, findDuplicates };
+module.exports = { parseFile, findColors, compareColors, findDuplicates };
