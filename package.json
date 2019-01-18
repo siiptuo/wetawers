@@ -1,10 +1,10 @@
 {
-  "name": "cscm",
+  "name": "wetawers",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "cscm": "./cli.js"
+    "wetawers": "./cli.js"
   },
   "scripts": {
     "test": "mocha"
