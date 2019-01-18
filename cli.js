@@ -3,9 +3,14 @@
 const fs = require("fs");
 const { parseFile, findColors, findDuplicates } = require("./");
 
-function resolver(file) {
-  return fs.readFileSync(file, "utf8");
-}
+const resolver = {
+  exists(file) {
+    return fs.existsSync(file);
+  },
+  read(file) {
+    return fs.readFileSync(file, "utf8");
+  }
+};
 
 function formatColor(rgba) {
   return (

@@ -5,19 +5,27 @@ const { spawnSync } = require("child_process");
 
 const { parseFile, findColors, compareColors, findDuplicates } = require("./");
 
-describe("findColors", () => {
+describe("parseFile", () => {
   const files = {
-    "single.css": "body { color: #ff0099; }",
-    "variables.css": "$var: #ff0099;",
-    "multiple.css": '@import "variables.css"; body { color: $var; }'
+    "single.css": "body { color: #f09; }",
+    "variables.css": "$color: #f09;",
+    "import.css": '@import "variables.css"; body { color: $color; }',
+    "_partial.scss": "$color: #f09;",
+    "import_partial.scss": '@import "partial"; body { color: $color; }',
+    "relative_import.scss": '@import "./partial"; body { color: $color; }'
   };
-  function resolver(file) {
-    if (file in files) {
-      return files[file];
-    } else {
-      throw `invalid file: ${file}`;
+  const resolver = {
+    exists(file) {
+      return file in files;
+    },
+    read(file) {
+      if (file in files) {
+        return files[file];
+      } else {
+        throw new Error(`invalid file: ${file}`);
+      }
     }
-  }
+  };
 
   it("should parse without @import", () => {
     const parseTree = parseFile("single.css", resolver);
@@ -30,20 +38,60 @@ describe("findColors", () => {
   });
 
   it("should parse file with @import", () => {
-    const parseTree = parseFile("multiple.css", resolver);
+    const parseTree = parseFile("import.css", resolver);
     assert.deepEqual(parseTree, [
       {
         filename: "variables.css",
         parseTree: gonzales.parse(files["variables.css"], { syntax: "scss" })
       },
       {
-        filename: "multiple.css",
-        parseTree: gonzales.parse(files["multiple.css"], { syntax: "scss" })
+        filename: "import.css",
+        parseTree: gonzales.parse(files["import.css"], { syntax: "scss" })
       }
     ]);
   });
 
-  it("should handle relative imports");
+  it("should import SCSS without exension");
+
+  it("should import CSS without exension");
+
+  it("should import partials", () => {
+    const parseTree = parseFile("import_partial.scss", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "_partial.scss",
+        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" })
+      },
+      {
+        filename: "import_partial.scss",
+        parseTree: gonzales.parse(files["import_partial.scss"], {
+          syntax: "scss"
+        })
+      }
+    ]);
+  });
+
+  it("should handle normal file and partial with same name");
+
+  it("should import multiple files");
+
+  it("should import using single quotes");
+
+  it("should handle relative imports", () => {
+    const parseTree = parseFile("relative_import.scss", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "_partial.scss",
+        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" })
+      },
+      {
+        filename: "relative_import.scss",
+        parseTree: gonzales.parse(files["relative_import.scss"], {
+          syntax: "scss"
+        })
+      }
+    ]);
+  });
 
   it("should handle absolute imports");
 

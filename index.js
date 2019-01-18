@@ -3,7 +3,7 @@ const parseColor = require("parse-color");
 const gonzales = require("gonzales-pe");
 
 function parseFile(filename, resolver) {
-  const parseTree = gonzales.parse(resolver(filename), { syntax: "scss" });
+  const parseTree = gonzales.parse(resolver.read(filename), { syntax: "scss" });
   let result = [
     {
       filename,
@@ -13,8 +13,37 @@ function parseFile(filename, resolver) {
   const directory = path.dirname(filename);
   parseTree.forEach("atrule", node => {
     if (node.content[0].content[0].content !== "import") return;
-    const file = node.content[2].content.slice(1, -1);
-    result = [...parseFile(path.join(directory, file), resolver), ...result];
+    let file = node.content[2].content.slice(1, -1);
+    const parts = path.parse(path.join(directory, file));
+    if (parts.ext) {
+      file = path.join(directory, file);
+    } else {
+      const scss = path.format({
+        dir: parts.dir,
+        name: parts.name,
+        ext: ".scss"
+      });
+      const partial = path.format({
+        dir: parts.dir,
+        name: "_" + parts.name,
+        ext: ".scss"
+      });
+      const css = path.format({
+        dir: parts.dir,
+        name: parts.name,
+        ext: ".css"
+      });
+      if (resolver.exists(scss)) {
+        file = scss;
+      } else if (resolver.exists(partial)) {
+        file = partial;
+      } else if (resolver.exists(css)) {
+        file = css;
+      } else {
+        throw new Error("unable to resolve: " + file);
+      }
+    }
+    result = [...parseFile(file, resolver), ...result];
   });
   return result;
 }
