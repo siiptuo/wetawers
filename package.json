@@ -12,6 +12,7 @@
   "author": "Tuomas Siipola",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.4.2",
     "gonzales-pe": "^4.2.3",
     "parse-color": "^1.0.0"
   },

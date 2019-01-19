@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const chalk = require("chalk");
 const { parseFile, findColors, findDuplicates } = require("./");
 
 const resolver = {
@@ -12,12 +13,21 @@ const resolver = {
   }
 };
 
+// Based on: https://www.w3.org/TR/AERT/#color-contrast
+// Returns value between 0 and 255.
+function brightness([r, g, b]) {
+  return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
 function formatColor(rgba) {
-  return (
+  const [r, g, b] = rgba;
+  return chalk
+    .bgRgb(r, g, b)
+    .keyword(brightness(rgba) < 128 ? "white" : "black")(
     "#" +
-    rgba[0].toString(16).padStart(2, "0") +
-    rgba[1].toString(16).padStart(2, "0") +
-    rgba[2].toString(16).padStart(2, "0")
+      r.toString(16).padStart(2, "0") +
+      g.toString(16).padStart(2, "0") +
+      b.toString(16).padStart(2, "0")
   );
 }
 
