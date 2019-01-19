@@ -2,6 +2,8 @@ const path = require("path");
 const parseColor = require("parse-color");
 const gonzales = require("gonzales-pe");
 
+const colorFunction = /^(rgb|hsl)a?$/;
+
 function parseFile(filename, resolver) {
   const parseTree = gonzales.parse(resolver.read(filename), { syntax: "scss" });
   let result = [
@@ -11,7 +13,7 @@ function parseFile(filename, resolver) {
     }
   ];
   const directory = path.dirname(filename);
-  parseTree.forEach("atrule", node => {
+  parseTree.traverseByType("atrule", node => {
     if (node.content[0].content[0].content !== "import") return;
     let file = node.content[2].content.slice(1, -1);
     const parts = path.parse(path.join(directory, file));
@@ -48,42 +50,35 @@ function parseFile(filename, resolver) {
   return result;
 }
 
-function _findColors(node, filename) {
-  if (node.type == "color") {
-    const content = "#" + node.content;
-    return {
-      rgba: parseColor(content).rgba,
-      content,
-      filename,
-      start: node.start,
-      end: node.end
-    };
-  }
-  if (
-    node.type == "function" &&
-    ["rgb", "rgba", "hsl", "hsla"].includes(node.content[0].content)
-  ) {
-    const content = node.toString();
-    return [
-      {
-        rgba: parseColor(content).rgba,
-        content,
-        filename,
-        start: node.start,
-        end: node.end
-      }
-    ];
-  }
-  if (Array.isArray(node.content)) {
-    return node.content.map(child => _findColors(child, filename)).flat();
-  }
-  return [];
-}
-
 function findColors(parseTree) {
-  return parseTree
-    .map(item => _findColors(item.parseTree, item.filename))
-    .flat();
+  const colors = [];
+  parseTree.forEach(item => {
+    item.parseTree.traverse(node => {
+      if (node.type == "color") {
+        const content = "#" + node.content;
+        colors.push({
+          rgba: parseColor(content).rgba,
+          content,
+          filename: item.filename,
+          start: node.start,
+          end: node.end
+        });
+      } else if (
+        node.type == "function" &&
+        node.content[0].content.match(colorFunction)
+      ) {
+        const content = node.toString();
+        colors.push({
+          rgba: parseColor(content).rgba,
+          content,
+          filename: item.filename,
+          start: node.start,
+          end: node.end
+        });
+      }
+    });
+  });
+  return colors;
 }
 
 function compareColors(a, b) {
