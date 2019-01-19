@@ -355,6 +355,9 @@ describe("CLI", () => {
       "- fixtures/duplicates.css:6:10",
       "- fixtures/duplicates.css:10:10",
       "",
+      "Processed 1 file",
+      "Found 2 duplicated colors",
+      "",
       ""
     ]);
     assert.equal(result.status, 1);
@@ -363,7 +366,12 @@ describe("CLI", () => {
   it("should not find duplicates", () => {
     const result = run("fixtures/no-duplicates.css");
     assert.deepEqual(result.stderr, []);
-    assert.deepEqual(result.stdout, []);
+    assert.deepEqual(result.stdout, [
+      "Processed 1 file",
+      "Found 0 duplicated colors",
+      "",
+      ""
+    ]);
     assert.equal(result.status, 0);
   });
 
@@ -374,6 +382,9 @@ describe("CLI", () => {
       "color #ff0000 duplicated:",
       "- fixtures/variables.scss:1:9",
       "- fixtures/import.scss:8:10",
+      "",
+      "Processed 2 files",
+      "Found 1 duplicated color",
       "",
       ""
     ]);

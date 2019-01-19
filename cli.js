@@ -51,5 +51,22 @@ if (duplicates.length > 0) {
     }
     console.log();
   }
+}
+
+console.log(
+  "Processed " +
+    parseTree.length +
+    " file" +
+    (parseTree.length === 1 ? "" : "s")
+);
+console.log(
+  "Found " +
+    duplicates.length +
+    " duplicated color" +
+    (duplicates.length === 1 ? "" : "s")
+);
+console.log();
+
+if (duplicates.length > 0) {
   process.exit(1);
 }
