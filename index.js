@@ -9,13 +9,15 @@ function parseFile(filename, resolver) {
   let result = [
     {
       filename,
-      parseTree
+      parseTree,
+      errors: []
     }
   ];
   const directory = path.dirname(filename);
   parseTree.traverseByType("atrule", node => {
     if (node.content[0].content[0].content !== "import") return;
-    let file = node.content[2].content.slice(1, -1);
+    let importName = node.content[2].content.slice(1, -1);
+    let file = importName;
     const parts = path.parse(path.join(directory, file));
     if (parts.ext) {
       file = path.join(directory, file);
@@ -42,7 +44,12 @@ function parseFile(filename, resolver) {
       } else if (resolver.exists(css)) {
         file = css;
       } else {
-        throw new Error("unable to resolve: " + file);
+        result[result.length - 1].errors.push({
+          start: node.start,
+          end: node.end,
+          message: `Couldn't resolve import: ${importName}`
+        });
+        return;
       }
     }
     result = [...parseFile(file, resolver), ...result];

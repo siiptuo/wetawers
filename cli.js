@@ -41,6 +41,25 @@ const parseTree = parseFile(file, resolver);
 const colors = findColors(parseTree);
 const duplicates = findDuplicates(colors);
 
+if (parseTree.some(item => item.errors.length > 0)) {
+  console.log("Errors:");
+  for (const item of parseTree) {
+    for (const error of item.errors) {
+      console.log(
+        "- " +
+          item.filename +
+          ":" +
+          error.start.line +
+          ":" +
+          error.start.column +
+          ": " +
+          chalk.red(error.message)
+      );
+    }
+  }
+  console.log();
+}
+
 if (duplicates.length > 0) {
   for (const colors of duplicates) {
     console.log("color " + formatColor(colors[0].rgba) + " duplicated:");

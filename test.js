@@ -12,7 +12,8 @@ describe("parseFile", () => {
     "import.css": '@import "variables.css"; body { color: $color; }',
     "_partial.scss": "$color: #f09;",
     "import_partial.scss": '@import "partial"; body { color: $color; }',
-    "relative_import.scss": '@import "./partial"; body { color: $color; }'
+    "relative_import.scss": '@import "./partial"; body { color: $color; }',
+    "missing_import.scss": '@import "missing"; body { color: $color; }'
   };
   const resolver = {
     exists(file) {
@@ -32,7 +33,8 @@ describe("parseFile", () => {
     assert.deepEqual(parseTree, [
       {
         filename: "single.css",
-        parseTree: gonzales.parse(files["single.css"], { syntax: "scss" })
+        parseTree: gonzales.parse(files["single.css"], { syntax: "scss" }),
+        errors: []
       }
     ]);
   });
@@ -42,11 +44,13 @@ describe("parseFile", () => {
     assert.deepEqual(parseTree, [
       {
         filename: "variables.css",
-        parseTree: gonzales.parse(files["variables.css"], { syntax: "scss" })
+        parseTree: gonzales.parse(files["variables.css"], { syntax: "scss" }),
+        errors: []
       },
       {
         filename: "import.css",
-        parseTree: gonzales.parse(files["import.css"], { syntax: "scss" })
+        parseTree: gonzales.parse(files["import.css"], { syntax: "scss" }),
+        errors: []
       }
     ]);
   });
@@ -60,13 +64,15 @@ describe("parseFile", () => {
     assert.deepEqual(parseTree, [
       {
         filename: "_partial.scss",
-        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" })
+        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" }),
+        errors: []
       },
       {
         filename: "import_partial.scss",
         parseTree: gonzales.parse(files["import_partial.scss"], {
           syntax: "scss"
-        })
+        }),
+        errors: []
       }
     ]);
   });
@@ -82,13 +88,15 @@ describe("parseFile", () => {
     assert.deepEqual(parseTree, [
       {
         filename: "_partial.scss",
-        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" })
+        parseTree: gonzales.parse(files["_partial.scss"], { syntax: "scss" }),
+        errors: []
       },
       {
         filename: "relative_import.scss",
         parseTree: gonzales.parse(files["relative_import.scss"], {
           syntax: "scss"
-        })
+        }),
+        errors: []
       }
     ]);
   });
@@ -99,7 +107,24 @@ describe("parseFile", () => {
 
   it("should handle inline property");
 
-  it("should handle missing files");
+  it("should handle missing files", () => {
+    const parseTree = parseFile("missing_import.scss", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "missing_import.scss",
+        parseTree: gonzales.parse(files["missing_import.scss"], {
+          syntax: "scss"
+        }),
+        errors: [
+          {
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 17 },
+            message: "Couldn't resolve import: missing"
+          }
+        ]
+      }
+    ]);
+  });
 
   it("should handle cyclic imports");
 });
@@ -382,6 +407,25 @@ describe("CLI", () => {
       "color #ff0000 duplicated:",
       "- fixtures/variables.scss:1:9",
       "- fixtures/import.scss:8:10",
+      "",
+      "Processed 2 files",
+      "Found 1 duplicated color",
+      "",
+      ""
+    ]);
+    assert.equal(result.status, 1);
+  });
+
+  it("should output missing files", () => {
+    const result = run("fixtures/missing.scss");
+    assert.deepEqual(result.stderr, []);
+    assert.deepEqual(result.stdout, [
+      "Errors:",
+      "- fixtures/missing.scss:2:1: Couldn't resolve import: iammissing",
+      "",
+      "color #ff0000 duplicated:",
+      "- fixtures/variables.scss:1:9",
+      "- fixtures/missing.scss:9:10",
       "",
       "Processed 2 files",
       "Found 1 duplicated color",
