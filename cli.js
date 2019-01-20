@@ -19,15 +19,20 @@ function brightness([r, g, b]) {
   return (r * 299 + g * 587 + b * 114) / 1000;
 }
 
+// padStart not supported in Node 6
+function leftPad2(str) {
+  return str.length == 1 ? "0" + str : str;
+}
+
 function formatColor(rgba) {
   const [r, g, b] = rgba;
   return chalk
     .bgRgb(r, g, b)
     .keyword(brightness(rgba) < 128 ? "white" : "black")(
     "#" +
-      r.toString(16).padStart(2, "0") +
-      g.toString(16).padStart(2, "0") +
-      b.toString(16).padStart(2, "0")
+      leftPad2(r.toString(16)) +
+      leftPad2(g.toString(16)) +
+      leftPad2(b.toString(16))
   );
 }
 
