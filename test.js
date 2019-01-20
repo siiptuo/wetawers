@@ -13,7 +13,8 @@ describe("parseFile", () => {
     "_partial.scss": "$color: #f09;",
     "import_partial.scss": '@import "partial"; body { color: $color; }',
     "relative_import.scss": '@import "./partial"; body { color: $color; }',
-    "missing_import.scss": '@import "missing"; body { color: $color; }'
+    "missing_import.scss": '@import "missing"; body { color: $color; }',
+    "syntax_error.scss": "asjdacn3"
   };
   const resolver = {
     exists(file) {
@@ -120,6 +121,23 @@ describe("parseFile", () => {
             start: { line: 1, column: 1 },
             end: { line: 1, column: 17 },
             message: "Couldn't resolve import: missing"
+          }
+        ]
+      }
+    ]);
+  });
+
+  it("should handle syntax errors", () => {
+    const parseTree = parseFile("syntax_error.scss", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "syntax_error.scss",
+        parseTree: null,
+        errors: [
+          {
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 1 },
+            message: "Syntax error"
           }
         ]
       }
@@ -429,6 +447,21 @@ describe("CLI", () => {
       "",
       "Processed 2 files",
       "Found 1 duplicated color",
+      "",
+      ""
+    ]);
+    assert.equal(result.status, 1);
+  });
+
+  it("should handle syntax error", () => {
+    const result = run("fixtures/error.scss");
+    assert.deepEqual(result.stderr, []);
+    assert.deepEqual(result.stdout, [
+      "Errors:",
+      "- fixtures/error.scss:1:1: Syntax error",
+      "",
+      "Processed 1 file",
+      "Found 0 duplicated colors",
       "",
       ""
     ]);

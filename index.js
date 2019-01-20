@@ -5,61 +5,84 @@ const gonzales = require("gonzales-pe");
 const colorFunction = /^(rgb|hsl)a?$/;
 
 function parseFile(filename, resolver) {
-  const parseTree = gonzales.parse(resolver.read(filename), { syntax: "scss" });
-  let result = [
-    {
-      filename,
-      parseTree,
-      errors: []
-    }
-  ];
-  const directory = path.dirname(filename);
-  parseTree.traverseByType("atrule", node => {
-    if (node.content[0].content[0].content !== "import") return;
-    let importName = node.content[2].content.slice(1, -1);
-    let file = importName;
-    const parts = path.parse(path.join(directory, file));
-    if (parts.ext) {
-      file = path.join(directory, file);
-    } else {
-      const scss = path.format({
-        dir: parts.dir,
-        name: parts.name,
-        ext: ".scss"
-      });
-      const partial = path.format({
-        dir: parts.dir,
-        name: "_" + parts.name,
-        ext: ".scss"
-      });
-      const css = path.format({
-        dir: parts.dir,
-        name: parts.name,
-        ext: ".css"
-      });
-      if (resolver.exists(scss)) {
-        file = scss;
-      } else if (resolver.exists(partial)) {
-        file = partial;
-      } else if (resolver.exists(css)) {
-        file = css;
-      } else {
-        result[result.length - 1].errors.push({
-          start: node.start,
-          end: node.end,
-          message: `Couldn't resolve import: ${importName}`
-        });
-        return;
+  try {
+    const parseTree = gonzales.parse(resolver.read(filename), {
+      syntax: "scss"
+    });
+    let result = [
+      {
+        filename,
+        parseTree,
+        errors: []
       }
+    ];
+    const directory = path.dirname(filename);
+    parseTree.traverseByType("atrule", node => {
+      if (node.content[0].content[0].content !== "import") return;
+      let importName = node.content[2].content.slice(1, -1);
+      let file = importName;
+      const parts = path.parse(path.join(directory, file));
+      if (parts.ext) {
+        file = path.join(directory, file);
+      } else {
+        const scss = path.format({
+          dir: parts.dir,
+          name: parts.name,
+          ext: ".scss"
+        });
+        const partial = path.format({
+          dir: parts.dir,
+          name: "_" + parts.name,
+          ext: ".scss"
+        });
+        const css = path.format({
+          dir: parts.dir,
+          name: parts.name,
+          ext: ".css"
+        });
+        if (resolver.exists(scss)) {
+          file = scss;
+        } else if (resolver.exists(partial)) {
+          file = partial;
+        } else if (resolver.exists(css)) {
+          file = css;
+        } else {
+          result[result.length - 1].errors.push({
+            start: node.start,
+            end: node.end,
+            message: `Couldn't resolve import: ${importName}`
+          });
+          return;
+        }
+      }
+      result = [...parseFile(file, resolver), ...result];
+    });
+    return result;
+  } catch (e) {
+    // Check if ParsingError from Gonzales PE
+    if (e.css_) {
+      return [
+        {
+          filename,
+          parseTree: null,
+          errors: [
+            {
+              start: { line: e.line, column: 1 },
+              end: { line: e.line, column: 1 },
+              message: 'Syntax error'
+            }
+          ]
+        }
+      ];
+    } else {
+      throw e;
     }
-    result = [...parseFile(file, resolver), ...result];
-  });
-  return result;
+  }
 }
 
 function findColors(parseTree) {
   const colors = [];
-  parseTree.forEach(item => {
+  parseTree.filter(item => item.parseTree).forEach(item => {
     item.parseTree.traverse(node => {
       if (node.type == "color") {
         const content = "#" + node.content;
