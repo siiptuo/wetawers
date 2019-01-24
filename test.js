@@ -22,7 +22,8 @@ describe("parseFile", () => {
     "_partial.scss": "$color: #f09;",
     "import_partial.scss": '@import "partial"; body { color: $color; }',
     "relative_import.scss": '@import "./partial"; body { color: $color; }',
-    "missing_import.scss": '@import "missing"; body { color: $color; }',
+    "missing_import.scss": '@import "missing.css"; body { color: $color; }',
+    "missing_import2.scss": '@import "missing"; body { color: $color; }',
     "syntax_error.scss": "asjdacn3"
   };
   const resolver = {
@@ -125,12 +126,31 @@ describe("parseFile", () => {
 
   it("should handle inline property");
 
-  it("should handle missing files", () => {
+  it("should handle missing file in CSS import", () => {
     const parseTree = parseFile("missing_import.scss", resolver);
     assert.deepEqual(parseTree, [
       {
         filename: "missing_import.scss",
         parseTree: gonzales.parse(files["missing_import.scss"], {
+          syntax: "scss"
+        }),
+        errors: [
+          {
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 21 },
+            message: "Couldn't resolve import: missing.css"
+          }
+        ]
+      }
+    ]);
+  });
+
+  it("should handle missing file in SCSS import", () => {
+    const parseTree = parseFile("missing_import2.scss", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "missing_import2.scss",
+        parseTree: gonzales.parse(files["missing_import2.scss"], {
           syntax: "scss"
         }),
         errors: [

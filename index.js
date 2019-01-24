@@ -19,6 +19,41 @@ function handleImport(node) {
   throw new Error("Unsupported @import");
 }
 
+function resolveImport(file, resolver) {
+  if (resolver.exists(file)) {
+    return file;
+  }
+  const parts = path.parse(file);
+  if (!parts.ext) {
+    const scss = path.format({
+      dir: parts.dir,
+      name: parts.name,
+      ext: ".scss"
+    });
+    if (resolver.exists(scss)) {
+      return scss;
+    }
+
+    const partial = path.format({
+      dir: parts.dir,
+      name: "_" + parts.name,
+      ext: ".scss"
+    });
+    if (resolver.exists(partial)) {
+      return partial;
+    }
+
+    const css = path.format({
+      dir: parts.dir,
+      name: parts.name,
+      ext: ".css"
+    });
+    if (resolver.exists(css)) {
+      return css;
+    }
+  }
+}
+
 function parseFile(filename, resolver) {
   try {
     const parseTree = gonzales.parse(resolver.read(filename), {
@@ -35,42 +70,16 @@ function parseFile(filename, resolver) {
     parseTree.traverseByType("atrule", node => {
       if (node.content[0].content[0].content !== "import") return;
       const importName = handleImport(node);
-      let file = importName;
-      const parts = path.parse(path.join(directory, file));
-      if (parts.ext) {
-        file = path.join(directory, file);
+      const file = resolveImport(path.join(directory, importName), resolver);
+      if (file) {
+        result = [...parseFile(file, resolver), ...result];
       } else {
-        const scss = path.format({
-          dir: parts.dir,
-          name: parts.name,
-          ext: ".scss"
+        result[result.length - 1].errors.push({
+          start: node.start,
+          end: node.end,
+          message: `Couldn't resolve import: ${importName}`
         });
-        const partial = path.format({
-          dir: parts.dir,
-          name: "_" + parts.name,
-          ext: ".scss"
-        });
-        const css = path.format({
-          dir: parts.dir,
-          name: parts.name,
-          ext: ".css"
-        });
-        if (resolver.exists(scss)) {
-          file = scss;
-        } else if (resolver.exists(partial)) {
-          file = partial;
-        } else if (resolver.exists(css)) {
-          file = css;
-        } else {
-          result[result.length - 1].errors.push({
-            start: node.start,
-            end: node.end,
-            message: `Couldn't resolve import: ${importName}`
-          });
-          return;
-        }
       }
-      result = [...parseFile(file, resolver), ...result];
     });
     return result;
   } catch (e) {
