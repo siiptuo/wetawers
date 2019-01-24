@@ -9,7 +9,16 @@ describe("parseFile", () => {
   const files = {
     "single.css": "body { color: #f09; }",
     "variables.css": "$color: #f09;",
-    "import.css": '@import "variables.css"; body { color: $color; }',
+    "import_double_quoted_string.css":
+      '@import "variables.css"; body { color: $color; }',
+    "import_single_quoted_string.css":
+      "@import 'variables.css'; body { color: $color; }",
+    "import_double_quoted_url.css":
+      '@import url("variables.css"); body { color: $color; }',
+    "import_single_quoted_url.css":
+      "@import url('variables.css'); body { color: $color; }",
+    "import_unquoted_url.css":
+      "@import url(variables.css); body { color: $color; }",
     "_partial.scss": "$color: #f09;",
     "import_partial.scss": '@import "partial"; body { color: $color; }',
     "relative_import.scss": '@import "./partial"; body { color: $color; }',
@@ -40,20 +49,28 @@ describe("parseFile", () => {
     ]);
   });
 
-  it("should parse file with @import", () => {
-    const parseTree = parseFile("import.css", resolver);
-    assert.deepEqual(parseTree, [
-      {
-        filename: "variables.css",
-        parseTree: gonzales.parse(files["variables.css"], { syntax: "scss" }),
-        errors: []
-      },
-      {
-        filename: "import.css",
-        parseTree: gonzales.parse(files["import.css"], { syntax: "scss" }),
-        errors: []
-      }
-    ]);
+  [
+    "import_double_quoted_string.css",
+    "import_single_quoted_string.css",
+    "import_double_quoted_url.css",
+    "import_single_quoted_url.css",
+    "import_unquoted_url.css"
+  ].forEach(file => {
+    it(`should parse file ${file}`, () => {
+      const parseTree = parseFile(file, resolver);
+      assert.deepEqual(parseTree, [
+        {
+          filename: "variables.css",
+          parseTree: gonzales.parse(files["variables.css"], { syntax: "scss" }),
+          errors: []
+        },
+        {
+          filename: file,
+          parseTree: gonzales.parse(files[file], { syntax: "scss" }),
+          errors: []
+        }
+      ]);
+    });
   });
 
   it("should import SCSS without exension");

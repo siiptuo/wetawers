@@ -4,6 +4,21 @@ const gonzales = require("gonzales-pe");
 
 const colorFunction = /^(rgb|hsl)a?$/;
 
+function handleImport(node) {
+  if (node.content[2].type === "string") {
+    return node.content[2].content.slice(1, -1);
+  }
+  if (node.content[2].type === "uri" && node.content[2].content.length > 0) {
+    if (node.content[2].content[0].type === "string") {
+      return node.content[2].content[0].content.slice(1, -1);
+    }
+    if (node.content[2].content[0].type === "raw") {
+      return node.content[2].content[0].content;
+    }
+  }
+  throw new Error("Unsupported @import");
+}
+
 function parseFile(filename, resolver) {
   try {
     const parseTree = gonzales.parse(resolver.read(filename), {
@@ -19,7 +34,7 @@ function parseFile(filename, resolver) {
     const directory = path.dirname(filename);
     parseTree.traverseByType("atrule", node => {
       if (node.content[0].content[0].content !== "import") return;
-      let importName = node.content[2].content.slice(1, -1);
+      const importName = handleImport(node);
       let file = importName;
       const parts = path.parse(path.join(directory, file));
       if (parts.ext) {
