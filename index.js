@@ -84,7 +84,7 @@ function parseFile(filename, resolver) {
             {
               start: { line: e.line, column: 1 },
               end: { line: e.line, column: 1 },
-              message: 'Syntax error'
+              message: "Syntax error"
             }
           ]
         }
@@ -97,32 +97,34 @@ function parseFile(filename, resolver) {
 
 function findColors(parseTree) {
   const colors = [];
-  parseTree.filter(item => item.parseTree).forEach(item => {
-    item.parseTree.traverse(node => {
-      if (node.type == "color") {
-        const content = "#" + node.content;
-        colors.push({
-          rgba: parseColor(content).rgba,
-          content,
-          filename: item.filename,
-          start: node.start,
-          end: node.end
-        });
-      } else if (
-        node.type == "function" &&
-        node.content[0].content.match(colorFunction)
-      ) {
-        const content = node.toString();
-        colors.push({
-          rgba: parseColor(content).rgba,
-          content,
-          filename: item.filename,
-          start: node.start,
-          end: node.end
-        });
-      }
+  parseTree
+    .filter(item => item.parseTree)
+    .forEach(item => {
+      item.parseTree.traverse(node => {
+        if (node.type == "color") {
+          const content = "#" + node.content;
+          colors.push({
+            rgba: parseColor(content).rgba,
+            content,
+            filename: item.filename,
+            start: node.start,
+            end: node.end
+          });
+        } else if (
+          node.type == "function" &&
+          node.content[0].content.match(colorFunction)
+        ) {
+          const content = node.toString();
+          colors.push({
+            rgba: parseColor(content).rgba,
+            content,
+            filename: item.filename,
+            start: node.start,
+            end: node.end
+          });
+        }
+      });
     });
-  });
   return colors;
 }
 
