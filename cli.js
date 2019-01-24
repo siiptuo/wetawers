@@ -6,7 +6,11 @@ const { parseFile, findColors, findDuplicates } = require("./");
 
 const resolver = {
   exists(file) {
-    return fs.existsSync(file);
+    try {
+      return fs.statSync(file).isFile();
+    } catch (e) {
+      return false;
+    }
   },
   read(file) {
     return fs.readFileSync(file, "utf8");
