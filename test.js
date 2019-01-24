@@ -24,7 +24,11 @@ describe("parseFile", () => {
     "relative_import.scss": '@import "./partial"; body { color: $color; }',
     "missing_import.scss": '@import "missing.css"; body { color: $color; }',
     "missing_import2.scss": '@import "missing"; body { color: $color; }',
-    "syntax_error.scss": "asjdacn3"
+    "syntax_error.scss": "asjdacn3",
+    "/app/node_modules/package/style.css": "body { color: #f00 }",
+    "/app/style.css": "@import '~package/style.css'",
+    "/app/src/style.css": "@import '~package/style.css'",
+    "/app/src/missing.css": "@import '~missing/style.css'"
   };
   const resolver = {
     exists(file) {
@@ -182,6 +186,67 @@ describe("parseFile", () => {
   });
 
   it("should handle cyclic imports");
+
+  it("should handle node_modules shorthand", () => {
+    const parseTree = parseFile("/app/src/style.css", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "/app/node_modules/package/style.css",
+        parseTree: gonzales.parse(
+          files["/app/node_modules/package/style.css"],
+          { syntax: "scss" }
+        ),
+        errors: []
+      },
+      {
+        filename: "/app/src/style.css",
+        parseTree: gonzales.parse(files["/app/src/style.css"], {
+          syntax: "scss"
+        }),
+        errors: []
+      }
+    ]);
+  });
+
+  it("should handle node_modules shorthand in root", () => {
+    const parseTree = parseFile("/app/style.css", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "/app/node_modules/package/style.css",
+        parseTree: gonzales.parse(
+          files["/app/node_modules/package/style.css"],
+          { syntax: "scss" }
+        ),
+        errors: []
+      },
+      {
+        filename: "/app/style.css",
+        parseTree: gonzales.parse(files["/app/style.css"], {
+          syntax: "scss"
+        }),
+        errors: []
+      }
+    ]);
+  });
+
+  it("should handle missing node_modules shorthand", () => {
+    const parseTree = parseFile("/app/src/missing.css", resolver);
+    assert.deepEqual(parseTree, [
+      {
+        filename: "/app/src/missing.css",
+        parseTree: gonzales.parse(files["/app/src/missing.css"], {
+          syntax: "scss"
+        }),
+        errors: [
+          {
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 28 },
+            message: "Couldn't resolve import: ~missing/style.css"
+          }
+        ]
+      }
+    ]);
+  });
 });
 
 describe("findColors", () => {

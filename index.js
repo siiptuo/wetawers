@@ -19,7 +19,22 @@ function handleImport(node) {
   throw new Error("Unsupported @import");
 }
 
-function resolveImport(file, resolver) {
+function resolveImport(directory, file, resolver) {
+  if (file[0] === "~") {
+    file = file.slice(1);
+    while (true) {
+      const test = resolveImport(
+        path.join(directory, "node_modules"),
+        file,
+        resolver
+      );
+      if (test) return test;
+      if (directory === "/") break;
+      directory = path.join(directory, "..");
+    }
+    return null;
+  }
+  file = path.join(directory, file);
   if (resolver.exists(file)) {
     return file;
   }
@@ -70,7 +85,7 @@ function parseFile(filename, resolver) {
     parseTree.traverseByType("atrule", node => {
       if (node.content[0].content[0].content !== "import") return;
       const importName = handleImport(node);
-      const file = resolveImport(path.join(directory, importName), resolver);
+      const file = resolveImport(directory, importName, resolver);
       if (file) {
         result = [...parseFile(file, resolver), ...result];
       } else {
