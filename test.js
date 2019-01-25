@@ -13,10 +13,18 @@ describe("parseFile", () => {
       '@import "variables.css"; body { color: $color; }',
     "import_single_quoted_string.css":
       "@import 'variables.css'; body { color: $color; }",
+    "import_double_quoted_string_without_whitespace.css":
+      '@import"variables.css"; body { color: $color; }',
+    "import_single_quoted_string_without_whitespace.css":
+      "@import'variables.css'; body { color: $color; }",
     "import_double_quoted_url.css":
       '@import url("variables.css"); body { color: $color; }',
     "import_single_quoted_url.css":
       "@import url('variables.css'); body { color: $color; }",
+    "import_double_quoted_url_with_whitespace.css":
+      '@import  url  (  "variables.css"  ); body { color: $color; }',
+    "import_single_quoted_url_with_whitespace.css":
+      "@import  url  (  'variables.css'  ); body { color: $color; }",
     "import_unquoted_url.css":
       "@import url(variables.css); body { color: $color; }",
     "_partial.scss": "$color: #f09;",
@@ -57,6 +65,8 @@ describe("parseFile", () => {
   [
     "import_double_quoted_string.css",
     "import_single_quoted_string.css",
+    "import_double_quoted_string_without_whitespace.css",
+    "import_single_quoted_string_without_whitespace.css",
     "import_double_quoted_url.css",
     "import_single_quoted_url.css",
     "import_unquoted_url.css"

@@ -5,15 +5,17 @@ const gonzales = require("gonzales-pe");
 const colorFunction = /^(rgb|hsl)a?$/;
 
 function handleImport(node) {
-  if (node.content[2].type === "string") {
-    return node.content[2].content.slice(1, -1);
+  const param =
+    node.content[1].type === "space" ? node.content[2] : node.content[1];
+  if (param.type === "string") {
+    return param.content.slice(1, -1);
   }
-  if (node.content[2].type === "uri" && node.content[2].content.length > 0) {
-    if (node.content[2].content[0].type === "string") {
-      return node.content[2].content[0].content.slice(1, -1);
+  if (param.type === "uri" && param.content.length > 0) {
+    if (param.content[0].type === "string") {
+      return param.content[0].content.slice(1, -1);
     }
-    if (node.content[2].content[0].type === "raw") {
-      return node.content[2].content[0].content;
+    if (param.content[0].type === "raw") {
+      return param.content[0].content;
     }
   }
   throw new Error("Unsupported @import");
